@@ -91,10 +91,10 @@ impl NsResults {
 
 fn get_last_change() -> activity::Timestamps {
     println!("fetching last change");
-    let current = get_ns_data().unwrap().get_range();
     let res: Vec<NsResults> = reqwest::blocking::get(format!("{ENDPOINT}?count=250"))
                                .unwrap().json().unwrap();
     let mut last_ts = res[0].to_timestamp();
+    let current = res[0].get_range();
     for e in res.iter() {
         if e.get_range() != current {
             break; //will return prev ts - the one before the change
@@ -130,8 +130,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn get_ns_data() -> Result<NsResults,reqwest::Error>{
-    let request_url = "https://nightscout.ransomti.me/api/v1/entries.json?count=1";
-    let res: Vec<NsResults> = reqwest::blocking::get(request_url)
+    let res: Vec<NsResults> = reqwest::blocking::get(format!("{ENDPOINT}?count=1"))
                                .unwrap().json().unwrap();
     Ok(res[0].clone())
 }
