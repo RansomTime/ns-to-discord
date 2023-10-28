@@ -105,20 +105,29 @@ fn get_last_change() -> activity::Timestamps {
 
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() {
+
+
+    loop {
+        main_loop().unwrap_or_default();
+        thread::sleep(time::Duration::from_secs(60));
+    }
+
+}
+
+fn main_loop() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = DiscordIpcClient::new("523786960947380245")?;
     println!("connecting to ns");
 
-    let mut range = get_ns_data().unwrap().get_range();
+    let mut prev = get_ns_data()?;
     let mut last_change = get_last_change();
 
     println!("connecting to discord");
     client.connect()?;
     loop {
         let data = get_ns_data()?;
-        if data.get_range() != range {
+        if data.get_range() != prev.get_range() {
             last_change = data.to_timestamp();
-            range = data.get_range();
         }
         client.set_activity(activity::Activity::new()
             .state(data.to_delta_str().as_str())
@@ -126,6 +135,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .timestamps(last_change.clone())
         )?;
         thread::sleep(time::Duration::from_secs(5));
+        prev = data;
     }
 }
 
