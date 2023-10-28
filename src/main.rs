@@ -3,6 +3,8 @@ use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use std::{thread, time};
 
 const CONVERSION_FACTOR: f32 = 18.016;
+const ENDPOINT: &str = "https://nightscout.ransomti.me/api/v1/entries/sgv.json";
+
 #[derive(PartialEq, Eq, Copy, Clone)]
 enum BgRange {
     High,
@@ -88,18 +90,18 @@ impl NsResults {
 }
 
 fn get_last_change() -> activity::Timestamps {
+    println!("fetching last change");
     let current = get_ns_data().unwrap().get_range();
-    let request_url = "https://nightscout.ransomti.me/api/v1/entries.json?count=100";
-    let res: Vec<NsResults> = reqwest::blocking::get(request_url)
+    let res: Vec<NsResults> = reqwest::blocking::get(format!("{ENDPOINT}?count=250"))
                                .unwrap().json().unwrap();
     let mut last_ts = res[0].to_timestamp();
     for e in res.iter() {
         if e.get_range() != current {
-            return last_ts;
+            break; //will return prev ts - the one before the change
         }
         last_ts = e.to_timestamp();
     }
-    get_ns_data().unwrap().to_timestamp()
+    last_ts // will be 250th change if none found in this range
 
 }
 
