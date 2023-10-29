@@ -18,7 +18,7 @@ Currently you'll have to compile and build yourself. I'm lazy and haven't built 
 
 Doesn't like talking to containerised versions of Discord on linux, but works fine with the .deb
 
-In order to show your status on servers you have
+In order to show your status on servers you need to enable it on that server's privacy settings. This also means that if you don't do that you're essentially sharing to friends only.
 
 Games you're playing seem to take precidence over this.
 
