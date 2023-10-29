@@ -1,6 +1,7 @@
 use serde::Deserialize;
 use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use std::{thread, time};
+use chrono::prelude::*;
 
 const CONVERSION_FACTOR: f32 = 18.016;
 const ENDPOINT: &str = "https://nightscout.ransomti.me/api/v1/entries/sgv.json";
@@ -13,12 +14,14 @@ enum BgRange {
 }
 
 #[derive(Deserialize, Debug, Clone)]
+#[allow(non_snake_case)] // API returns non snake case
 struct NsResults
 {
     sgv: f32,
     delta: f32,
     direction: String,
     date: i64,
+    dateString: String,
 }
 
 impl NsResults {
@@ -67,32 +70,32 @@ impl NsResults {
         };
 
         format!("{:.1} mmol/L{}",
-            &self.sgv_as_mmol(),
-            range_state,
-        )
-    }
+        &self.sgv_as_mmol(),
+        range_state,
+    )
+}
 
-    fn to_delta_str(&self) -> String {
-        let add = if self.delta > 0.0 {
-            '+'
-        } else {
-            '\0'
-        };
-        format!("{}{:.1} {}",
-            add,
-            &self.delta_as_mmol(),
-            &self.direction_to_char())
-    }
+fn to_delta_str(&self) -> String {
+    let add = if self.delta > 0.0 {
+        '+'
+    } else {
+        '\0'
+    };
+    format!("{}{:.1} {}",
+    add,
+    &self.delta_as_mmol(),
+    &self.direction_to_char())
+}
 
-    fn to_timestamp(&self) -> activity::Timestamps {
-        activity::Timestamps::new().start(self.date)
-    }
+fn to_timestamp(&self) -> activity::Timestamps {
+    activity::Timestamps::new().start(self.date)
+}
 }
 
 fn get_last_change() -> activity::Timestamps {
     println!("fetching last change");
     let res: Vec<NsResults> = reqwest::blocking::get(format!("{ENDPOINT}?count=250"))
-                               .unwrap().json().unwrap();
+    .unwrap().json().unwrap();
     let mut last_ts = res[0].to_timestamp();
     let current = res[0].get_range();
     for e in res.iter() {
@@ -129,18 +132,38 @@ fn main_loop() -> Result<(), Box<dyn std::error::Error>> {
         if data.get_range() != prev.get_range() {
             last_change = data.to_timestamp();
         }
-        client.set_activity(activity::Activity::new()
+
+        let time_since = Utc::now().signed_duration_since(
+            DateTime::parse_from_rfc3339(&data.dateString).unwrap()
+        );
+
+        if time_since.num_minutes() > 15 {
+            client.set_activity(activity::Activity::new()
+            .state("No value for 15 mins")
+            .details(""))?;
+        } else {
+            client.set_activity(activity::Activity::new()
             .state(data.to_delta_str().as_str())
             .details(data.to_status_str().as_str())
             .timestamps(last_change.clone())
         )?;
-        thread::sleep(time::Duration::from_secs(5));
+        }
+        if time_since.num_minutes() > 5 {
+            thread::sleep(time::Duration::from_secs(5));
+        } else {
+            let to_sleep = 60 * 5 - time_since.num_seconds();
+
+            thread::sleep(time::Duration::from_secs(to_sleep.try_into().unwrap_or(5)));
+        }
+
+
+
         prev = data;
     }
 }
 
 fn get_ns_data() -> Result<NsResults,reqwest::Error>{
     let res: Vec<NsResults> = reqwest::blocking::get(format!("{ENDPOINT}?count=1"))
-                               .unwrap().json().unwrap();
+    .unwrap().json().unwrap();
     Ok(res[0].clone())
 }
