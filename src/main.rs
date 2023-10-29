@@ -23,14 +23,14 @@ enum BgRange {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-#[allow(non_snake_case)] // API returns non snake case
 struct NsResults
 {
     sgv: f32,
     delta: f32,
     direction: String,
     date: i64,
-    dateString: String,
+    #[serde(rename = "dateString")] 
+    date_string: String,
 }
 
 impl NsResults {
@@ -145,7 +145,7 @@ fn main_loop() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         let time_since = Utc::now().signed_duration_since(
-            DateTime::parse_from_rfc3339(&data.dateString).unwrap()
+            DateTime::parse_from_rfc3339(&data.date_string).unwrap()
         );
 
         if time_since.num_minutes() > 15 {
