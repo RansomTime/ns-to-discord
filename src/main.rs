@@ -81,24 +81,24 @@ impl NsResults {
         format!("{:.1} mmol/L{}",
         &self.sgv_as_mmol(),
         range_state,
-    )
-}
+        )
+    }
 
-fn to_delta_str(&self) -> String {
-    let add = if self.delta > 0.0 {
-        '+'
-    } else {
-        '\0'
-    };
-    format!("{}{:.1} {}",
-    add,
-    &self.delta_as_mmol(),
-    &self.direction_to_char())
-}
+    fn to_delta_str(&self) -> String {
+        let add = if self.delta > 0.0 {
+            '+'
+        } else {
+            '\0'
+        };
+        format!("{}{:.1} {}",
+        add,
+        &self.delta_as_mmol(),
+        &self.direction_to_char())
+    }
 
-fn to_timestamp(&self) -> activity::Timestamps {
-    activity::Timestamps::new().start(self.date)
-}
+    fn to_timestamp(&self) -> activity::Timestamps {
+        activity::Timestamps::new().start(self.date)
+    }
 }
 
 fn get_last_change() -> activity::Timestamps {
