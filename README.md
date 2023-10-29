@@ -12,7 +12,7 @@ Currently you'll have to compile and build yourself. I'm lazy and haven't built 
 
 1. Install rust https://www.rust-lang.org/tools/install
 2. Clone repo 
-3. Change ENDPOINT in main.rs to 
+3. Change ENDPOINT in main.rs to point at your nightscout API
 4. Change TOKEN in main.rs to Some("Your token") or None if your nightscout is visable to all.
 5. Cargo run --release to run
 

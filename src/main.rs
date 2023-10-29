@@ -121,7 +121,9 @@ fn main() {
 
 
     loop {
-        main_loop().unwrap_or_default();
+        main_loop().unwrap_or_else(|e| {
+            println!("Error: {}", e);
+        });
         thread::sleep(time::Duration::from_secs(60));
     }
 
