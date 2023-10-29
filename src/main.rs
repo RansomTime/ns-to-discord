@@ -5,6 +5,15 @@ use chrono::prelude::*;
 
 const CONVERSION_FACTOR: f32 = 18.016;
 const ENDPOINT: &str = "https://nightscout.ransomti.me/api/v1/entries/sgv.json";
+//const TOKEN: Option<&str> = None; //No token required
+const TOKEN:Option<&str> = Some("reporter-eedc563cda3d55b7"); // a token
+
+fn get_token_str() -> String{
+    match TOKEN {
+        Some(token) => format!("&token={token}"),
+        None => String::new()
+    }
+}
 
 #[derive(PartialEq, Eq, Copy, Clone)]
 enum BgRange {
@@ -94,7 +103,7 @@ fn to_timestamp(&self) -> activity::Timestamps {
 
 fn get_last_change() -> activity::Timestamps {
     println!("fetching last change");
-    let res: Vec<NsResults> = reqwest::blocking::get(format!("{ENDPOINT}?count=250"))
+    let res: Vec<NsResults> = reqwest::blocking::get(format!("{ENDPOINT}?count=250{}",get_token_str()))
     .unwrap().json().unwrap();
     let mut last_ts = res[0].to_timestamp();
     let current = res[0].get_range();
@@ -163,7 +172,7 @@ fn main_loop() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn get_ns_data() -> Result<NsResults,reqwest::Error>{
-    let res: Vec<NsResults> = reqwest::blocking::get(format!("{ENDPOINT}?count=1"))
+    let res: Vec<NsResults> = reqwest::blocking::get(format!("{ENDPOINT}?count=1{}",get_token_str()))
     .unwrap().json().unwrap();
     Ok(res[0].clone())
 }
